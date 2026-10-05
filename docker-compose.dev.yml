@@ -1,0 +1,29 @@
+services:
+
+  web:
+    build: ./app
+    ports:
+      - "${APP_PORT}:3000"
+    env_file:
+      - .env.dev
+    depends_on:
+      - db
+    networks:
+      - internal_net
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - dev_db_data:/var/lib/mysql
+    networks:
+      - internal_net
+networks:
+  internal_net:
+
+volumes:
+  dev_db_data:
