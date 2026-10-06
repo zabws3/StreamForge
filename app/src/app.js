@@ -1,5 +1,6 @@
 const express = require("express");
 const db = require("./db");
+const { client: redis, connectRedis } = require("./cache");
 
 const app = express();
 
@@ -13,9 +14,18 @@ app.get("/health", async (req, res) => {
     try {
         await db.query("SELECT 1");
 
+        let cacheStatus = "disabled";
+
+        if (process.env.REDIS_HOST) {
+            await connectRedis();
+            await redis.ping();
+            cacheStatus = "connected";
+        }
+
         res.json({
             status: "ok",
-            database: "connected"
+            database: "connected",
+            cache: cacheStatus
         });
     } catch (error) {
         res.status(500).json({

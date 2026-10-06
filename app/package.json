@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "express": "^5.1.0",
-    "mysql2": "^3.24.5"
+    "mysql2": "^3.24.5",
+    "redis": "^6.3.0"
   }
 }
