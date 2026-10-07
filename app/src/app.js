@@ -35,6 +35,43 @@ app.get("/health", async (req, res) => {
     }
 });
 
+app.get("/services", async (req, res) => {
+    try {
+        if (process.env.REDIS_HOST) {
+            await connectRedis();
+
+            const cachedServices = await redis.get("services");
+
+            if (cachedServices) {
+                return res.json({
+                    source: "redis",
+                    data: JSON.parse(cachedServices)
+                });
+            }
+        }
+
+        const [rows] = await db.query(
+            "SELECT id, name, status FROM services"
+        );
+
+        if (process.env.REDIS_HOST) {
+            await redis.setEx("services", 60, JSON.stringify(rows));
+        }
+
+        res.json({
+            source: "mysql",
+            data: rows
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            status: "error"
+        });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`StreamForge listening on port ${PORT}`);
 });

@@ -1,4 +1,4 @@
-USE streamforge_dev;
+
 
 CREATE TABLE IF NOT EXISTS services (
     id INT AUTO_INCREMENT PRIMARY KEY,
