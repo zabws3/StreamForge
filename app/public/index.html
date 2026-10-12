@@ -8,6 +8,26 @@
     <script src="/js/catalog.js" defer></script>
     <script src="/js/auth.js" defer></script>
 </head>
+
+<div id="system-health" class="health-widget">
+    <button id="health-toggle" class="health-toggle"
+            type="button" aria-expanded="false">
+        <span id="health-dot" class="health-dot"></span>
+        <span id="health-label">Estado del sistema</span>
+        <span aria-hidden="true">⌃</span>
+    </button>
+
+    <div id="health-details" class="health-details" hidden>
+        <p>Aplicación <span id="health-app">Comprobando...</span></p>
+        <p>MySQL <span id="health-db">Comprobando...</span></p>
+        <p>Redis <span id="health-redis">Comprobando...</span></p>
+        <button id="health-refresh" type="button">Actualizar estado</button>
+    </div>
+</div>
+
+<script src="/js/health.js" defer></script>
+
+
 <body>
     <header class="navbar">
         <a class="logo" href="/">STREAM<span>FORGE</span></a>
