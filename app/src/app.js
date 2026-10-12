@@ -9,6 +9,8 @@ const { RedisStore } = require("connect-redis");
 const requireAuth = require("./middleware/requireAuth");
 const adminRoutes = require("./routes/admin");
 const path = require("path");
+const seedDemoUsers = require("./scripts/seedDemoUsers");
+
 
 const app = express();
 
@@ -151,6 +153,20 @@ app.use("/auth", authRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/video/stream", requireAuth, streamRoutes);
 app.use("/api/admin", adminRoutes);
-app.listen(PORT, () => {
-    console.log(`StreamForge listening on port ${PORT}`);
-});
+
+
+async function startServer() {
+    try {
+        await db.query("SELECT 1");
+        await seedDemoUsers();
+
+        app.listen(PORT, () => {
+            console.log(`StreamForge listening on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error("No se pudo inicializar StreamForge:", error);
+        process.exit(1);
+    }
+}
+
+startServer();

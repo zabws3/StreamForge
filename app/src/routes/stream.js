@@ -62,7 +62,7 @@ router.get("/*filepath", (req, res) => {
             MIME_TYPES[extension] || "application/octet-stream"
         );
 
-        res.setHeader("Cache-Control", "public, max-age=3600");
+        res.setHeader("Cache-Control", "private, no-store");
         res.setHeader("Accept-Ranges", "bytes");
 
         console.log(
