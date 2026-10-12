@@ -7,7 +7,7 @@ const streamRoutes = require("./routes/stream");
 const session = require("express-session");
 const { RedisStore } = require("connect-redis");
 const requireAuth = require("./middleware/requireAuth");
-
+const adminRoutes = require("./routes/admin");
 const path = require("path");
 
 const app = express();
@@ -63,6 +63,19 @@ app.get("/player.html", (req, res) => {
 
     res.sendFile(path.join(__dirname, "../public/player.html"));
 });
+
+const requireAdmin = require("./middleware/requireAdmin");
+
+app.get("/admin.html", (req, res, next) => {
+    requireAdmin(req, res, (error) => {
+        if (error) return next(error);
+
+        res.sendFile(
+            path.join(__dirname, "../public/admin.html")
+        );
+    });
+});
+
 
 app.use(express.static(path.join(__dirname, "../public")));
 
@@ -137,7 +150,7 @@ app.get("/services", async (req, res) => {
 app.use("/auth", authRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/video/stream", requireAuth, streamRoutes);
-
+app.use("/api/admin", adminRoutes);
 app.listen(PORT, () => {
     console.log(`StreamForge listening on port ${PORT}`);
 });

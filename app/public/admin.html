@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración | StreamForge</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/js/auth.js" defer></script>
+    <script src="/js/admin.js" defer></script>
+</head>
+<body>
+    <header class="navbar">
+        <a class="logo" href="/">STREAMFORGE</a>
+        <nav>
+            <a href="/">Catálogo</a>
+            <a href="/admin.html">Administración</a>
+        </nav>
+    </header>
+
+    <main class="admin-page">
+        <section class="admin-heading">
+            <div>
+                <p class="admin-eyebrow">STREAMFORGE / CONTROL</p>
+                <h1>Administración de vídeos</h1>
+                <p>Gestiona el catálogo, los manifiestos y las portadas.</p>
+            </div>
+            <button id="newVideoButton" type="button">+ Añadir vídeo</button>
+        </section>
+
+        <p id="adminMessage" role="status" aria-live="polite"></p>
+
+        <section class="admin-panel">
+            <div class="admin-toolbar">
+                <h2>Biblioteca</h2>
+                <input id="videoSearch" type="search"
+                       placeholder="Buscar por título..." aria-label="Buscar vídeos">
+            </div>
+
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Portada</th>
+                            <th>Título</th>
+                            <th>Categoría</th>
+                            <th>Duración</th>
+                            <th>Manifiesto MPD</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="videoTableBody">
+                        <tr><td colspan="6">Cargando vídeos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="videoFormSection" class="admin-panel admin-form-panel" hidden>
+            <div class="admin-toolbar">
+                <h2 id="formTitle">Añadir vídeo</h2>
+                <button id="cancelFormButton" type="button" class="secondary-button">
+                    Cancelar
+                </button>
+            </div>
+
+            <form id="videoForm">
+                <input id="videoId" type="hidden">
+
+                <div class="admin-form-grid">
+                    <label>
+                        Título *
+                        <input id="title" name="title" type="text" maxlength="200" required>
+                    </label>
+
+                    <label>
+                        Duración (segundos) *
+                        <input id="durationSeconds" name="durationSeconds"
+                               type="number" min="1" step="1" required>
+                    </label>
+
+                    <label class="admin-full-width">
+                        Descripción
+                        <textarea id="description" name="description"
+                                  maxlength="20000" rows="4"></textarea>
+                    </label>
+
+                    <label>
+                        URL de la portada
+                        <input id="thumbnailUrl" name="thumbnailUrl" type="url"
+                               maxlength="500" placeholder="https://ejemplo.com/portada.jpg">
+                    </label>
+
+                    <label>
+                        Categoría
+                        <select id="categoryId" name="categoryId">
+                            <option value="">Sin categoría</option>
+                        </select>
+                    </label>
+
+                    <label class="admin-full-width">
+                        Ruta relativa del manifiesto MPD *
+                        <input id="mpdPath" name="mpdPath" type="text" maxlength="500"
+                               placeholder="Cortometraje/manifest.mpd" required>
+                        <small>
+                            Ruta relativa a MEDIA_PATH; no introduzcas una URL ni
+                            una ruta absoluta del contenedor.
+                        </small>
+                    </label>
+
+                    <div class="admin-full-width">
+                        <p class="admin-preview-label">Vista previa de portada</p>
+                        <img id="thumbnailPreview" class="admin-thumbnail-preview"
+                             alt="Vista previa de la portada" hidden>
+                    </div>
+                </div>
+
+                <div class="admin-form-actions">
+                    <button id="saveVideoButton" type="submit">Guardar vídeo</button>
+                    <button id="resetFormButton" type="button"
+                            class="secondary-button">Limpiar</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

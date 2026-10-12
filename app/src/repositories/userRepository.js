@@ -7,6 +7,7 @@ async function getUserById(id) {
             user_id AS id,
             username,
             email,
+            role,
             password_hash AS passwordHash
          FROM users
          WHERE user_id = ?`,
@@ -22,6 +23,7 @@ async function getUserByEmail(email) {
             user_id AS id,
             username,
             email,
+            role,
             password_hash AS passwordHash
          FROM users
          WHERE email = ?`,
@@ -63,7 +65,8 @@ async function validateUser(email, password) {
     return {
         id: user.id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        role: user.role
     };
 }
 

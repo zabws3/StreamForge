@@ -94,9 +94,10 @@ router.post("/register", async (req, res) => {
         createSession(
             req,
             res,
-            { id, username, email },
+            { id, username, email, role: "user" },
             201
         );
+        
     } catch (error) {
         console.error("Register error:", error);
 
