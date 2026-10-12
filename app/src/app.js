@@ -6,6 +6,7 @@ const videoRoutes = require("./routes/videos");
 const streamRoutes = require("./routes/stream");
 const session = require("express-session");
 const { RedisStore } = require("connect-redis");
+const requireAuth = require("./middleware/requireAuth");
 
 const path = require("path");
 
@@ -55,9 +56,17 @@ app.use(async (req, res, next) => {
 });
 
 
+app.get("/player.html", (req, res) => {
+    if (!req.session || !req.session.user) {
+        return res.redirect("/login.html");
+    }
 
+    res.sendFile(path.join(__dirname, "../public/player.html"));
+});
 
 app.use(express.static(path.join(__dirname, "../public")));
+
+
 
 app.get("/", (req, res) => {
     res.send("StreamForge is running!");
@@ -127,7 +136,7 @@ app.get("/services", async (req, res) => {
 
 app.use("/auth", authRoutes);
 app.use("/api/videos", videoRoutes);
-app.use("/video/stream", streamRoutes);
+app.use("/video/stream", requireAuth, streamRoutes);
 
 app.listen(PORT, () => {
     console.log(`StreamForge listening on port ${PORT}`);

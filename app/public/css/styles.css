@@ -515,3 +515,25 @@ footer {
         padding: 26px 20px;
     }
 }
+
+
+.player-container {
+    width: 100%;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 24px;
+}
+
+.player-container video {
+    display: block;
+    width: 100%;
+    max-height: 75vh;
+    aspect-ratio: 16 / 9;
+    background: #000;
+}
+
+#playerMessage {
+    color: #ccc;
+    margin-top: 14px;
+}

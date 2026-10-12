@@ -1,9 +1,10 @@
 const express = require("express");
 const videoRepository = require("../repositories/videoRepository");
 const { client: redis, connectRedis } = require("../cache");
-
 const router = express.Router();
 const CACHE_TTL = 60;
+const requireAuth = require("../middleware/requireAuth");
+
 
 async function getCached(key, fetchData) {
     if (process.env.REDIS_HOST) {
@@ -96,7 +97,7 @@ router.get("/", async (req, res) => {
 });
 
 // GET /api/videos/:id
-router.get("/:id", async (req, res) => {
+router.get("/:id", requireAuth, async (req, res) => {
     try {
         const id = Number(req.params.id);
 
