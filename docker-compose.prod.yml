@@ -19,6 +19,10 @@ services:
     networks:
       - internal_net
     environment:
+      NODE_ENV: production
+      REDIS_HOST: cache
+      REDIS_PORT: 6379
+      SESSION_SECRET: ${SESSION_SECRET}
       MEDIA_PATH: /var/zabflix/media
     volumes:
       - ../media:/var/zabflix/media:ro
