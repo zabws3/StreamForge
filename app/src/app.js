@@ -88,28 +88,38 @@ app.get("/", (req, res) => {
 });
 
 app.get("/health", async (req, res) => {
+    let database = "disconnected";
+    let cache = "disconnected";
+
     try {
         await db.query("SELECT 1");
+        database = "connected";
+    } catch (error) {
+        console.error("Health check MySQL:", error.message);
+    }
 
-        let cacheStatus = "disabled";
-
+    try {
         if (process.env.REDIS_HOST) {
             await connectRedis();
-            await redis.ping();
-            cacheStatus = "connected";
-        }
 
-        res.json({
-            status: "ok",
-            database: "connected",
-            cache: cacheStatus
-        });
+            if (redis.isReady) {
+                await redis.ping();
+                cache = "connected";
+            }
+        }
     } catch (error) {
-        res.status(500).json({
-            status: "error",
-            database: "disconnected"
-        });
+        console.error("Health check Redis:", error.message);
     }
+
+    const allHealthy =
+        database === "connected" &&
+        (!process.env.REDIS_HOST || cache === "connected");
+
+    res.status(allHealthy ? 200 : 503).json({
+        status: allHealthy ? "ok" : "error",
+        database,
+        cache
+    });
 });
 
 app.get("/services", async (req, res) => {
