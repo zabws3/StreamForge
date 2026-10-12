@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamForge | Iniciar sesión</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/js/auth.js" defer></script>
+</head>
+<body class="auth-page">
+    <main class="auth-card">
+        <a class="logo auth-logo" href="/">STREAM<span>FORGE</span></a>
+        <p class="eyebrow">BIENVENIDO DE NUEVO</p>
+        <h1>Iniciar sesión</h1>
+        <p class="auth-subtitle">Accede a tu catálogo y continúa disfrutando.</p>
+
+        <form id="loginForm">
+            <label for="email">Correo electrónico</label>
+            <input id="email" name="email" type="email"
+                   autocomplete="email" placeholder="tu@email.com" required>
+
+            <label for="password">Contraseña</label>
+            <input id="password" name="password" type="password"
+                   autocomplete="current-password" placeholder="Tu contraseña" required>
+
+            <p id="formMessage" class="form-message" role="alert"></p>
+            <button class="primary-button auth-submit" type="submit">Entrar</button>
+        </form>
+
+        <p class="auth-switch">¿Todavía no tienes cuenta?
+            <a href="/register.html">Regístrate</a>
+        </p>
+        <a class="back-link" href="/">← Volver al catálogo</a>
+    </main>
+</body>
+</html>
