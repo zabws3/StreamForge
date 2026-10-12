@@ -1,3 +1,4 @@
+
 const db = require("../db");
 const bcrypt = require("bcrypt");
 
@@ -38,9 +39,9 @@ async function createUser(username, email, password) {
 
     const [result] = await db.query(
         `INSERT INTO users
-            (username, email, password_hash)
-         VALUES (?, ?, ?)`,
-        [username, email, passwordHash]
+            (username, email, password_hash, role)
+         VALUES (?, ?, ?, ?)`,
+        [username, email, passwordHash, "user"]
     );
 
     return result.insertId;

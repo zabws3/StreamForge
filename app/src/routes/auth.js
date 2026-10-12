@@ -97,7 +97,7 @@ router.post("/register", async (req, res) => {
             { id, username, email, role: "user" },
             201
         );
-        
+
     } catch (error) {
         console.error("Register error:", error);
 
@@ -159,7 +159,7 @@ router.post("/logout", (req, res) => {
         res.clearCookie("streamforge.sid", {
             httpOnly: true,
             sameSite: "lax",
-            secure: process.env.NODE_ENV === "production"
+            secure: process.env.COOKIE_SECURE === "true"
         });
 
         res.json({ message: "Sesión cerrada correctamente" });

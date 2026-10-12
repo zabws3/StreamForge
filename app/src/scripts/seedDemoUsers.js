@@ -4,10 +4,7 @@ const bcrypt = require("bcrypt");
 
 async function seedDemoUsers() {
     // Las cuentas predeterminadas solo pueden crearse en desarrollo.
-    if (
-        process.env.NODE_ENV === "production" ||
-        process.env.SEED_DEMO_USERS !== "true"
-    ) {
+    if (process.env.SEED_DEMO_USERS !== "true") {
         return;
     }
 
