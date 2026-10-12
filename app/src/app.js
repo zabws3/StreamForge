@@ -2,6 +2,7 @@ const express = require("express");
 const db = require("./db");
 const { client: redis, connectRedis } = require("./cache");
 const authRoutes = require("./routes/auth");
+const videoRoutes = require("./routes/videos");
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.get("/services", async (req, res) => {
 });
 
 app.use("/auth", authRoutes);
+app.use("/api/videos", videoRoutes);
 
 app.listen(PORT, () => {
     console.log(`StreamForge listening on port ${PORT}`);
