@@ -18,6 +18,10 @@ services:
       retries: 5
     networks:
       - internal_net
+    environment:
+      MEDIA_PATH: /var/zabflix/media
+    volumes:
+      - ../media:/var/zabflix/media:ro
   db:
     image: mysql:8.0
     environment:

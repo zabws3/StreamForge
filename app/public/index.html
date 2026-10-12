@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamForge | Catálogo</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/js/catalog.js" defer></script>
+</head>
+<body>
+    <header class="navbar">
+        <a class="logo" href="/">STREAM<span>FORGE</span></a>
+
+        <nav>
+            <a class="active" href="/">Inicio</a>
+            <a href="#catalogo">Películas</a>
+            <a href="#catalogo">Mi catálogo</a>
+        </nav>
+
+        <div class="header-actions">
+            <form id="searchForm" class="search">
+                <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Buscar vídeos..."
+                    aria-label="Buscar vídeos"
+                >
+                <button type="submit" aria-label="Buscar">⌕</button>
+            </form>
+            <a class="login-link" href="/login.html">Iniciar sesión</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <p class="eyebrow">TU PLATAFORMA DE STREAMING</p>
+                <h1>Tu próximo vídeo<br>empieza aquí.</h1>
+                <p class="hero-description">
+                    Descubre contenido y disfruta de reproducción
+                    adaptativa con tecnología MPEG-DASH.
+                </p>
+                <a class="primary-button" href="#catalogo">Explorar catálogo</a>
+            </div>
+            <div class="hero-decoration" aria-hidden="true">SF</div>
+        </section>
+
+        <section class="catalog-section" id="catalogo">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">DESCUBRE CONTENIDO</p>
+                    <h2>Catálogo de vídeos</h2>
+                </div>
+                <span id="videoCount" class="video-count"></span>
+            </div>
+
+            <p id="statusMessage" class="status-message">
+                Cargando catálogo...
+            </p>
+
+            <div id="videoGrid" class="video-grid"></div>
+        </section>
+    </main>
+
+    <footer>
+        <a class="logo footer-logo" href="/">STREAM<span>FORGE</span></a>
+        <p>Proyecto de streaming adaptativo · MPEG-DASH</p>
+    </footer>
+</body>
+</html>

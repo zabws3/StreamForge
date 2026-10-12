@@ -3,12 +3,61 @@ const db = require("./db");
 const { client: redis, connectRedis } = require("./cache");
 const authRoutes = require("./routes/auth");
 const videoRoutes = require("./routes/videos");
+const streamRoutes = require("./routes/stream");
+const session = require("express-session");
+const { RedisStore } = require("connect-redis");
+
+const path = require("path");
 
 const app = express();
 
 const PORT = 3000;
 
 app.use(express.json());
+
+
+const sessionOptions = {
+    name: "streamforge.sid",
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 8 * 60 * 60 * 1000
+    }
+};
+
+if (!sessionOptions.secret) {
+    throw new Error("Falta configurar SESSION_SECRET");
+}
+
+if (process.env.REDIS_HOST) {
+    sessionOptions.store = new RedisStore({
+        client: redis,
+        prefix: "streamforge:sess:"
+    });
+}
+
+const sessionMiddleware = session(sessionOptions);
+
+app.use(async (req, res, next) => {
+    try {
+        if (process.env.REDIS_HOST) {
+            await connectRedis();
+        }
+
+        sessionMiddleware(req, res, next);
+    } catch (error) {
+        next(error);
+    }
+});
+
+
+
+
+app.use(express.static(path.join(__dirname, "../public")));
 
 app.get("/", (req, res) => {
     res.send("StreamForge is running!");
@@ -78,6 +127,7 @@ app.get("/services", async (req, res) => {
 
 app.use("/auth", authRoutes);
 app.use("/api/videos", videoRoutes);
+app.use("/video/stream", streamRoutes);
 
 app.listen(PORT, () => {
     console.log(`StreamForge listening on port ${PORT}`);

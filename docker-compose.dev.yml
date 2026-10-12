@@ -17,6 +17,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    environment:
+      MEDIA_PATH: /var/zabflix/media
+    volumes:
+      - ../media:/var/zabflix/media:ro
 
   db:
     image: mysql:8.0
