@@ -24,9 +24,19 @@
         <h1 id="videoTitle">Cargando vídeo...</h1>
         <p id="videoDescription"></p>
 
-        <div class="player-container">
-            <video id="videoPlayer" controls autoplay playsinline></video>
-        </div>
+    <div class="player-container">
+        <video id="videoPlayer" controls autoplay playsinline></video>
+    </div>
+
+    <div class="player-quality">
+        <label for="qualitySelect">Calidad de reproducción</label>
+        <select id="qualitySelect" disabled>
+            <option value="auto">Automática</option>
+        </select>
+        <span id="qualityInfo">Detectando calidades...</span>
+    </div>
+
+    <p id="playerMessage" role="status">Preparando reproducción...</p>
 
         <p id="playerMessage" role="status">Preparando reproducción...</p>
     </main>

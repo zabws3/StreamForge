@@ -1,3 +1,4 @@
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -20,7 +21,12 @@ router.get("/*filepath", (req, res) => {
         ? req.params.filepath.join(path.sep)
         : req.params.filepath;
 
+    console.log(`[DASH] ${req.method} ${req.originalUrl}`);
+    console.log(`[DASH] Archivo solicitado: ${requestedPath}`);
+
     if (!requestedPath) {
+        console.warn("[DASH] Petición sin ruta de archivo");
+
         return res.status(400).json({
             error: "Falta la ruta del archivo"
         });
@@ -33,6 +39,8 @@ router.get("/*filepath", (req, res) => {
         filePath !== MEDIA_PATH &&
         !filePath.startsWith(MEDIA_PATH + path.sep)
     ) {
+        console.warn(`[DASH] Acceso denegado: ${requestedPath}`);
+
         return res.status(403).json({
             error: "Acceso denegado"
         });
@@ -40,6 +48,8 @@ router.get("/*filepath", (req, res) => {
 
     fs.stat(filePath, (error, stats) => {
         if (error || !stats.isFile()) {
+            console.warn(`[DASH] Archivo no encontrado: ${filePath}`);
+
             return res.status(404).json({
                 error: "Archivo multimedia no encontrado"
             });
@@ -55,7 +65,24 @@ router.get("/*filepath", (req, res) => {
         res.setHeader("Cache-Control", "public, max-age=3600");
         res.setHeader("Accept-Ranges", "bytes");
 
-        res.sendFile(filePath);
+        console.log(
+            `[DASH] Sirviendo ${requestedPath} (${stats.size} bytes)`
+        );
+
+        res.sendFile(filePath, sendError => {
+            if (sendError) {
+                console.error(
+                    `[DASH] Error sirviendo ${requestedPath}:`,
+                    sendError.message
+                );
+
+                if (!res.headersSent) {
+                    res.status(sendError.statusCode || 500).end();
+                }
+            } else {
+                console.log(`[DASH] Envío completado: ${requestedPath}`);
+            }
+        });
     });
 });
 

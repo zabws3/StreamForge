@@ -733,3 +733,32 @@ footer {
         padding: 16px;
     }
 }
+.player-quality {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.player-quality label {
+    font-weight: 600;
+}
+
+.player-quality select {
+    padding: 8px 12px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: #181818;
+    color: #fff;
+}
+
+.player-quality select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#qualityInfo {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
