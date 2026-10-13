@@ -8,6 +8,7 @@ const requireAuth = require("../middleware/requireAuth");
 
 async function getCached(key, fetchData) {
     if (process.env.REDIS_HOST) {
+        //Intento de recuperación de datos desde Redis
         try {
             await connectRedis();
 
@@ -23,9 +24,10 @@ async function getCached(key, fetchData) {
             console.error("Redis read error:", error.message);
         }
     }
-
+    // Recuperación de datos desde MySQL
     const data = await fetchData();
 
+    //Escritura de datos en Redis
     if (process.env.REDIS_HOST) {
         try {
             await connectRedis();
