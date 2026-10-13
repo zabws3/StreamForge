@@ -34,19 +34,42 @@ async function checkHealth() {
 
         const data = await response.json();
 
-        const appHealthy = response.ok && data.status === "ok";
-        const dbHealthy = response.ok && data.database === "connected";
-        const redisHealthy = response.ok && data.cache === "connected";
+        // Express responde si el endpoint /health está disponible.
+        // Un HTTP 503 puede indicar que solo falla una dependencia.
+        const appHealthy = true;
 
-        setStatus(appStatus, appHealthy ? "Online" : "Error", appHealthy);
-        setStatus(dbStatus, dbHealthy ? "Conectado" : "Error", dbHealthy);
+        const dbHealthy = data.database === "connected";
+        const redisConfigured = window.location.port === "8080";
+        // Si el endpoint informa del estado de Redis, lo usamos.
+        const redisHealthy = data.cache === "connected";
+
         setStatus(
-            redisStatus,
-            redisHealthy ? "Conectado" : "Error",
-            redisHealthy
+            appStatus,
+            appHealthy ? "OK" : "Error",
+            appHealthy
         );
 
-        const allHealthy = appHealthy && dbHealthy && redisHealthy;
+        setStatus(
+            dbStatus,
+            dbHealthy ? "Conectado" : "Error",
+            dbHealthy
+        );
+
+        if (!redisConfigured) {
+            redisStatus.textContent = "No configurado";
+            redisStatus.style.color = "#aaa";
+        } else {
+            setStatus(
+                redisStatus,
+                redisHealthy ? "Operativo" : "Error",
+                redisHealthy
+            );
+        }
+
+        const allHealthy =
+            appHealthy &&
+            dbHealthy &&
+            (!redisConfigured || redisHealthy);
 
         label.textContent = allHealthy
             ? "Sistema operativo"
