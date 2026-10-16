@@ -303,20 +303,72 @@ Refresh the health panel and confirm that the database connection recovers.
 ```text
 StreamForge/
 ├── app/
-│   ├── src/
-│   ├── public/
 │   ├── Dockerfile
 │   ├── package.json
-│   └── package-lock.json
+│   ├── package-lock.json
+│   ├── public/
+│   │   ├── admin.html
+│   │   ├── index.html
+│   │   ├── login.html
+│   │   ├── player.html
+│   │   ├── register.html
+│   │   ├── css/
+│   │   │   └── styles.css
+│   │   └── js/
+│   │       ├── admin.js
+│   │       ├── auth.js
+│   │       ├── catalog.js
+│   │       ├── health.js
+│   │       └── player.js
+│   └── src/
+│       ├── app.js
+│       ├── cache.js
+│       ├── db.js
+│       ├── middleware/
+│       │   ├── requireAdmin.js
+│       │   └── requireAuth.js
+│       ├── repositories/
+│       │   ├── categoryRepository.js
+│       │   ├── userRepository.js
+│       │   └── videoRepository.js
+│       ├── routes/
+│       │   ├── admin.js
+│       │   ├── auth.js
+│       │   ├── stream.js
+│       │   └── videos.js
+│       └── scripts/
+│           └── seedDemoUsers.js
 ├── db/
 │   └── init.sql
+├── nginx/
 ├── docker-compose.dev.yml
 ├── docker-compose.prod.yml
-├── .env.dev.example
-├── .env.prod.example
+├── .env.dev
+├── .env.prod
+├── .gitignore
 ├── Makefile
+├── package.json
+├── package-lock.json
 └── README.md
 ```
+
+### Main Components
+
+- **`app/public/`**: Frontend pages, stylesheets, and JavaScript files for the catalogue, authentication, video player, administration panel, and health monitoring.
+- **`app/src/app.js`**: Main application entry point and server configuration.
+- **`app/src/cache.js`**: Redis client configuration and connection handling.
+- **`app/src/db.js`**: Database connection logic.
+- **`app/src/middleware/`**: Authentication and administrator authorization middleware.
+- **`app/src/repositories/`**: Data access logic for users, videos, and categories.
+- **`app/src/routes/`**: Application endpoints for authentication, administration, video catalogue, and streaming.
+- **`app/src/scripts/seedDemoUsers.js`**: Initialization script for demonstration accounts.
+- **`db/init.sql`**: SQL initialization script for the database.
+- **`nginx/`**: Directory for Nginx configuration or related files.
+- **`docker-compose.dev.yml`**: Development environment configuration.
+- **`docker-compose.prod.yml`**: Production environment configuration.
+- **`Makefile`**: Commands for building, starting, stopping, and managing the environments.
+- **`.env.dev` and `.env.prod`**: Environment-specific configuration and credentials. These files should not be committed if they contain real secrets.
+
 
 ## AI Usage Declaration
 
