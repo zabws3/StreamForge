@@ -1,317 +1,202 @@
-# StreamForge
+# StreamForge — Multi-Environment Deployment
 
-Aplicación web de streaming basada en Node.js y Express, con MySQL para
-persistencia de datos y Redis para caché y sesiones en el entorno de
-producción. El proyecto utiliza Docker Compose para separar los entornos
-de desarrollo (`dev`) y producción (`prod`).
+StreamForge is a containerized web application for browsing and streaming video content. This project demonstrates how to deploy a multi-service application in separate development and production environments using Docker Compose.
 
-## Índice
+## Features
 
--   [Características](#características)
--   [Arquitectura](#arquitectura)
--   [Requisitos previos](#requisitos-previos)
--   [Estructura del proyecto](#estructura-del-proyecto)
--   [Configuración](#configuración)
--   [Instalación y ejecución](#instalación-y-ejecución)
--   [Entornos dev y prod](#entornos-dev-y-prod)
--   [Healthchecks y monitorización](#healthchecks-y-monitorización)
--   [Pruebas y verificaciones
-    realizadas](#pruebas-y-verificaciones-realizadas)
--   [Makefile y comandos útiles](#makefile-y-comandos-útiles)
--   [Persistencia de datos](#persistencia-de-datos)
--   [Solución de problemas](#solución-de-problemas)
--   [Seguridad](#seguridad)
--   [Pendiente de verificar](#pendiente-de-verificar)
+- Video catalogue with search and category filtering.
+- User authentication and role-based access for regular users and administrators.
+- Video playback.
+- MySQL for persistent application data.
+- Redis caching and session storage in production.
+- Independent development and production environments.
+- Healthchecks and service status monitoring.
+- Automated deployment using a Makefile.
 
-## Características
+## Architecture
 
--   Aplicación Node.js/Express.
--   Base de datos MySQL 8.
--   Redis 7 en producción para caché y almacenamiento de sesiones.
--   Separación de configuración y despliegue mediante archivos Compose y
-    variables de entorno.
--   Volúmenes Docker para persistir la base de datos.
--   Endpoint HTTP `/health` que informa del estado de la aplicación,
-    MySQL y Redis.
--   Autenticación con sesiones Express y contraseñas almacenadas
-    mediante hash bcrypt.
--   Reproducción de vídeo mediante MPEG-DASH y catálogo de vídeos.
--   Usuarios de demostración creados/actualizados mediante un script de
-    inicialización.
-
-## Arquitectura
-
-``` mermaid
+```mermaid
 flowchart TB
-    Browser["Navegador"]
-    Web["StreamForge web<br/>Node.js + Express<br/>Puerto interno 3000"]
-    DB[("MySQL 8<br/>Datos persistentes")]
-    Redis[("Redis 7<br/>Caché y sesiones")]
-    Vol[("Volumen Docker<br/>de MySQL")]
-    Browser -->|"HTTP publicado"| Web
-    Web -->|"Red Docker interna"| DB
-    Web -.->|"Solo en producción"| Redis
-    DB --- Vol
+    Browser[Web Browser]
+
+    Browser -->|HTTP :8081| DevWeb[Development Web]
+    Browser -->|HTTP :8080| ProdWeb[Production Web]
+
+    subgraph DEV["Development Environment"]
+        DevWeb --> DevDB[(MySQL)]
+        DevDB --- DevVol[(dev_db_data)]
+    end
+
+    subgraph PROD["Production Environment"]
+        ProdWeb --> ProdDB[(MySQL)]
+        ProdWeb --> Redis[(Redis)]
+        ProdDB --- ProdVol[(prod_db_data)]
+    end
 ```
 
-Solo el servicio web publica un puerto en el host. MySQL y Redis se
-comunican con la aplicación mediante la red interna de Docker y no
-necesitan publicar sus puertos al host.
+Each environment has its own Docker Compose project, configuration file, database container, and persistent database volume. Production additionally uses Redis for caching and session storage.
 
-### Entornos
+Services communicate over their internal Docker networks. Only the web application ports are published to the host.
 
--   **Dev:** aplicación web + MySQL. Acceso web esperado en
-    `http://localhost:8081`.
--   **Prod:** aplicación web + MySQL + Redis. Acceso web esperado en
-    `http://localhost:8080`.
+## Requirements
 
-## Requisitos previos
+- Docker Engine
+- Docker Compose v2
+- GNU Make
 
--   Docker Engine.
--   Docker Compose v2 (`docker compose`, integrado en las versiones
-    actuales de Docker).
--   `make`, si se quiere usar el `Makefile`.
--   Git, si se clona el repositorio.
+Node.js and npm do not need to be installed on the host because the application dependencies are installed inside the Docker images.
 
-Comprueba la instalación:
+## Installation and Quick Start
 
-``` bash
-docker --version
-docker compose version
-make --version
+1. Clone the repository or download and extract the project ZIP.
+2. Open a terminal in the project root.
+3. Create the environment files `.env.dev` and `.env.prod` using the examples below.
+4. Ensure Docker is running.
+5. Run:
+
+```bash
+make install
 ```
 
-## Estructura del proyecto
+This checks the Docker prerequisites, builds both application images, and starts both environments.
 
-La estructura principal es:
+Access the application:
 
-``` text
-StreamForge/
-├── app/
-│   ├── public/                 # HTML, CSS y JavaScript del frontend
-│   ├── src/
-│   │   ├── app.js              # Servidor Express y endpoint /health
-│   │   ├── cache.js            # Cliente Redis
-│   │   ├── db.js               # Conexión MySQL
-│   │   ├── middleware/         # Autenticación/autorización
-│   │   ├── repositories/       # Acceso a datos
-│   │   ├── routes/              # Rutas HTTP/API
-│   │   └── scripts/             # Scripts auxiliares y usuarios demo
-│   ├── Dockerfile
-│   └── package.json
-├── db/
-│   └── init.sql                # Esquema y datos iniciales de MySQL
-├── docker-compose.dev.yml
-├── docker-compose.prod.yml
-├── .env.dev                    # Configuración local de desarrollo (no subir)
-├── .env.prod                   # Configuración de producción (no subir)
-├── Makefile                    # Comandos de automatización, si está presente
-└── README.md
+- **Development:** http://localhost:8081
+- **Production:** http://localhost:8080
+
+Check the container status and health endpoints:
+
+```bash
+make ps
+curl -i http://localhost:8081/health
+curl -i http://localhost:8080/health
 ```
 
-La estructura exacta puede variar si se han añadido o movido archivos
-durante el desarrollo.
+## Environments
 
-## Configuración
+| Feature | Development | Production |
+|---|---|---|
+| Compose file | `docker-compose.dev.yml` | `docker-compose.prod.yml` |
+| Environment file | `.env.dev` | `.env.prod` |
+| Compose project | `streamforge-dev` | `streamforge-prod` |
+| Web port | `8081` | `8080` |
+| Database | MySQL 8.0 | MySQL 8.0 |
+| Redis | Not configured | Enabled |
+| Session storage | Express memory store | Redis |
+| Database volume | `dev_db_data` | `prod_db_data` |
 
-Hay dos archivos de variables de entorno, uno por entorno. Los archivos
-`.env` contienen credenciales y configuración específica; no deben
-incluirse en el repositorio.
+The environments are isolated using different Compose project names, avoiding resource-name conflicts and allowing them to be managed independently.
 
-### Variables habituales de desarrollo
+## Environment Configuration
 
-Ejemplo orientativo basado en la configuración utilizada:
+The application uses separate environment files for development and production. The following values are examples for local demonstration only.
 
-``` dotenv
+### `.env.dev`
+
+```dotenv
 APP_PORT=8081
-MYSQL_HOST=db
-MYSQL_PORT=3306
-MYSQL_DATABASE=streamforge_dev
-MYSQL_USER=streamforge
-MYSQL_PASSWORD=<contraseña-local>
-MYSQL_ROOT_PASSWORD=<contraseña-root-local>
-```
 
-### Variables habituales de producción
-
-``` dotenv
-APP_PORT=8080
 MYSQL_HOST=db
 MYSQL_PORT=3306
 MYSQL_DATABASE=streamforge
 MYSQL_USER=streamforge
-MYSQL_PASSWORD=<contraseña-producción>
-MYSQL_ROOT_PASSWORD=<contraseña-root-producción>
+MYSQL_PASSWORD=devpass
+MYSQL_ROOT_PASSWORD=devrootpass
+
+SEED_DEMO_USERS=true
+NODE_ENV=development
+
+SESSION_SECRET=replace_with_a_random_development_secret
+COOKIE_SECURE=false
+```
+
+Redis is not configured in development.
+
+### `.env.prod`
+
+```dotenv
+APP_PORT=8080
+
+MYSQL_HOST=db
+MYSQL_PORT=3306
+MYSQL_DATABASE=streamforge
+MYSQL_USER=streamforge
+MYSQL_PASSWORD=prodpass
+MYSQL_ROOT_PASSWORD=prodrootpass
+
 REDIS_HOST=cache
 REDIS_PORT=6379
+
+SEED_DEMO_USERS=true
 NODE_ENV=production
-SESSION_SECRET=<secreto-aleatorio-largo>
-SEED_DEMO_USERS=false
+
+SESSION_SECRET=replace_with_a_random_production_secret
+COOKIE_SECURE=false
 ```
 
-Los valores entre `<...>` son marcadores: sustitúyelos por valores
-propios. No copies literalmente los marcadores al archivo de entorno.
-Genera un secreto de sesión aleatorio y distinto por entorno. No
-reutilices las contraseñas de ejemplo en un despliegue real.
+`COOKIE_SECURE=false` is intended for local HTTP testing. Set it to `true` when production is served over HTTPS.
 
-Dentro de Docker, `db` y `cache` son nombres de servicio y se resuelven
-mediante DNS interno de Compose. No uses `localhost` como host de MySQL
-o Redis desde el contenedor web.
+**Security:** Replace example credentials with appropriate values. Generate a different random `SESSION_SECRET` for each environment. Do not commit real secrets or production credentials to a public repository.
 
-## Instalación y ejecución
+### Environment Variables
 
-### 1. Obtener el proyecto
+| Variable | Description |
+|---|---|
+| `APP_PORT` | Host port used to access the web application |
+| `MYSQL_HOST` | MySQL hostname inside the Docker network |
+| `MYSQL_PORT` | MySQL internal port |
+| `MYSQL_DATABASE` | Database name |
+| `MYSQL_USER` | Application database user |
+| `MYSQL_PASSWORD` | Application database password |
+| `MYSQL_ROOT_PASSWORD` | MySQL root password |
+| `REDIS_HOST` | Redis hostname; configured only in production |
+| `REDIS_PORT` | Redis internal port, normally `6379` |
+| `SEED_DEMO_USERS` | Enables initialization of demo accounts |
+| `NODE_ENV` | Application environment |
+| `SESSION_SECRET` | Secret used by Express to sign session cookies |
+| `COOKIE_SECURE` | Requires HTTPS for session cookies when set to `true` |
 
-Si ya tienes el repositorio local, entra en su raíz. Si lo clonas,
-utiliza la URL real de tu repositorio:
+## Demo User Initialization
 
-``` bash
-git clone <URL_DEL_REPOSITORIO>
-cd StreamForge
-```
+When `SEED_DEMO_USERS=true`, StreamForge automatically initializes two demo accounts if they do not already exist: an administrator and a regular user.
 
-### 2. Preparar los archivos de entorno
+| Role | Email | Password |
+|---|---|---|
+| Administrator | `admin@admin.com` | `admin123` |
+| Regular user | `usuario@usuario.com` | `usuario123` |
 
-Comprueba que existen `.env.dev` y `.env.prod`. Si no existen, créalos a
-partir de los ejemplos anteriores y ajusta los valores a las variables
-referenciadas por cada archivo Compose.
+These accounts allow users to test the application's authentication and role-based access control without manually creating accounts.
 
-No compartas ni subas esos archivos con credenciales reales.
+The initialization process should avoid creating duplicate accounts when the application restarts.
 
-### 3. Arrancar desarrollo
+**Security note:** These credentials are intended exclusively for local development and academic demonstrations. Never use them in a public or production deployment. Disable demo-user seeding and replace default credentials before exposing the application to external users.
 
-``` bash
-docker compose --env-file .env.dev -f docker-compose.dev.yml up -d --build
-```
 
-Consulta el estado:
+## Caching and Sessions
 
-``` bash
-docker compose --env-file .env.dev -f docker-compose.dev.yml ps
-docker compose --env-file .env.dev -f docker-compose.dev.yml logs -f web
-```
+### Redis Cache
 
-Abre `http://localhost:8081`.
+Redis is enabled only in production. Video API responses are cached for 60 seconds.
 
-### 4. Arrancar producción local
+The `/api/videos` endpoint returns a `source` field indicating whether the response came from MySQL or Redis. Repeating a request while the cache entry remains valid should demonstrate the use of the cache.
 
-``` bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
-```
+### User Sessions
 
-Consulta el estado:
+The application uses `express-session` in both environments.
 
-``` bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml ps
-docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f web
-```
+- Development stores sessions in the Node.js process memory.
+- Production uses Redis to store session data.
 
-Abre `http://localhost:8080`.
+`SESSION_SECRET` is required in both environments and is used to sign session cookies. `COOKIE_SECURE` controls whether cookies are restricted to HTTPS. Use `false` for local HTTP testing and `true` when HTTPS is configured.
 
-En este proyecto, "prod" es el entorno de producción simulado en local
-mediante Compose; no implica por sí mismo que exista un dominio público,
-HTTPS o un proxy inverso.
+## Healthchecks and Monitoring
 
-### 5. Comprobar el endpoint de salud
+The `/health` endpoint reports the status of the application's dependencies. The web interface displays application, database, and cache status separately.
 
-En producción local:
+For example, when MySQL is unavailable but Redis remains connected, the endpoint may return HTTP `503` with:
 
-``` bash
-curl -i http://localhost:8080/health
-```
-
-En desarrollo:
-
-``` bash
-curl -i http://localhost:8081/health
-```
-
-Cuando todos los servicios configurados estén conectados, se espera una
-respuesta similar a:
-
-``` json
-{
-  "status": "ok",
-  "database": "connected",
-  "cache": "connected"
-}
-```
-
-En desarrollo, si Redis no está configurado, el campo `cache` puede ser
-`disabled`.
-
-### 6. Detener los servicios
-
-Para detener los contenedores conservando los volúmenes:
-
-``` bash
-docker compose --env-file .env.dev -f docker-compose.dev.yml down
-docker compose --env-file .env.prod -f docker-compose.prod.yml down
-```
-
-`down` elimina los contenedores y redes de Compose, pero normalmente
-conserva los volúmenes nombrados. **No añadas `-v` si quieres conservar
-los datos.**
-
-## Entornos dev y prod
-
-  ------------------------------------------------------------------------------
-  Aspecto                 Dev                        Prod
-  ----------------------- -------------------------- ---------------------------
-  Compose                 `docker-compose.dev.yml`   `docker-compose.prod.yml`
-
-  Variables               `.env.dev`                 `.env.prod`
-
-  Puerto del host         `8081`                     `8080`
-
-  Aplicación              Node.js + Express          Node.js + Express
-
-  Base de datos           MySQL 8                    MySQL 8
-
-  Caché Redis             No configurada en el       Redis 7
-                          entorno descrito           
-
-  Sesiones                Según la configuración de  Redis mediante
-                          la aplicación              `connect-redis` cuando
-                                                     `REDIS_HOST` está
-                                                     configurado
-
-  Datos                   Volumen Docker de          Volumen Docker de
-                          desarrollo                 producción
-  ------------------------------------------------------------------------------
-
-Los volúmenes y nombres de proyecto de Compose deben mantenerse
-separados para evitar mezclar datos de desarrollo y producción.
-Comprueba los nombres efectivos con `docker compose ... config` y
-`docker volume ls`.
-
-## Healthchecks y monitorización
-
-Hay dos mecanismos distintos:
-
-1.  **Healthchecks de Docker Compose:** indican si cada contenedor está
-    saludable según el comando configurado para ese servicio. Consulta
-    su estado con `docker compose ... ps`.
-2.  **Endpoint de aplicación `/health`:** realiza comprobaciones desde
-    Express y devuelve JSON con los campos `status`, `database` y
-    `cache`. En la implementación actual, el endpoint devuelve HTTP
-    `200` cuando los servicios requeridos están conectados y HTTP `503`
-    cuando detecta una dependencia caída.
-
-Ejemplo de estado normal:
-
-``` json
-{
-  "status": "ok",
-  "database": "connected",
-  "cache": "connected"
-}
-```
-
-Ejemplo observado cuando MySQL está desconectado y Redis sigue
-funcionando:
-
-``` json
+```json
 {
   "status": "error",
   "database": "disconnected",
@@ -319,243 +204,124 @@ funcionando:
 }
 ```
 
-La interfaz web consulta `/health` y muestra el estado de cada
-componente. Para que Redis no aparezca como caído cuando la respuesta
-HTTP es `503` por un problema de MySQL, el frontend debe evaluar cada
-campo de forma independiente, sin condicionar todos los estados a
-`response.ok`:
+This indicates a dependency failure, not necessarily that the Express process has stopped responding.
 
-``` js
-const appHealthy = data.status === "ok";
-const dbHealthy = data.database === "connected";
-const redisHealthy =
-    data.cache === "connected" || data.cache === "disabled";
+Docker Compose healthchecks monitor the web application and MySQL in development, and the web application, MySQL, and Redis in production.
+
+The web application's healthcheck uses `/health`, so it may report `unhealthy` if that endpoint returns `503` when a required dependency is unavailable.
+
+## Testing and Verification
+
+The following tests can be used to verify the deployment.
+
+### 1. Service Startup
+
+```bash
+make ps
 ```
 
-Si `cache: "disabled"` debe mostrarse como "No configurado" en lugar de
-"Conectado", conviene representar ese estado por separado en la
-interfaz.
+Check that the expected containers are running and healthy.
 
-### Pruebas manuales de salud
+### 2. Database Connectivity
 
-Ver el estado de los contenedores:
+Execute a test SQL query against MySQL to confirm that the database accepts connections.
 
-``` bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml ps
+### 3. Data Persistence
+
+Insert a test record into MySQL, recreate the database container, and verify that the record remains available.
+
+The database uses named Docker volumes (`dev_db_data` and `prod_db_data`) to persist data independently of the database container's lifecycle.
+
+For example, to recreate the production database container while preserving its volume:
+
+```bash
+docker compose -p streamforge-prod \
+  --env-file .env.prod \
+  -f docker-compose.prod.yml up -d --force-recreate db
 ```
 
-Comprobar Redis directamente:
+Wait for MySQL to become healthy before verifying the record.
 
-``` bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml exec cache redis-cli ping
+Do not use `docker compose down -v` during this test because it removes named volumes.
+
+### 4. Redis Cache
+
+Request the video catalogue twice:
+
+```bash
+curl -s http://localhost:8080/api/videos
 ```
 
-La respuesta esperada es `PONG`.
+The first response may come from MySQL. Repeat the request and check whether `source` changes to `redis` after the cache has been populated.
 
-Consultar el endpoint:
+### 5. Failure Handling
 
-``` bash
+Stop MySQL in production:
+
+```bash
+make stop-db-prod
+```
+
+Check the health endpoint and request the video catalogue again:
+
+```bash
 curl -i http://localhost:8080/health
+curl -s http://localhost:8080/api/videos
 ```
 
-Para probar una caída de MySQL sin parar el resto del entorno:
+If the catalogue cache entry is still valid, the application should be able to return the cached video data even though MySQL is unavailable.
 
-``` bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml stop db
-curl -i http://localhost:8080/health
-docker compose --env-file .env.prod -f docker-compose.prod.yml start db
+Restart MySQL afterwards:
+
+```bash
+make start-db-prod
 ```
 
-Después de arrancar MySQL, espera a que vuelva a estar saludable y
-repite `curl`. No utilices `down -v` para esta prueba.
+Refresh the health panel and confirm that the database connection recovers.
 
-## Pruebas y verificaciones realizadas
+## Makefile Commands
 
-Las siguientes pruebas se realizaron durante el desarrollo y se basan en
-las salidas observadas en terminal:
+| Command | Description |
+|---|---|
+| `make install` | Check prerequisites, build images, and start both environments |
+| `make setup` | Build images and start both environments |
+| `make build-dev` | Build the development image |
+| `make build-prod` | Build the production image |
+| `make dev` | Start development |
+| `make prod` | Start production |
+| `make ps` | Show container status for both environments |
+| `make logs-dev` | Follow development logs |
+| `make logs-prod` | Follow production logs |
+| `make stop-db-dev` | Stop development MySQL |
+| `make start-db-dev` | Start development MySQL |
+| `make stop-db-prod` | Stop production MySQL |
+| `make start-db-prod` | Start production MySQL |
+| `make down` | Stop and remove both Compose environments without deleting named volumes |
 
-  ---------------------------------------------------------------------------------------------------
-  Prueba                              Resultado observado
-  ----------------------------------- ---------------------------------------------------------------
-  Arranque de los servicios de        `web`, `db` y `cache` aparecieron como `Up`; los tres llegaron
-  producción                          a mostrar `healthy`.
+## Project Structure
 
-  Endpoint `/health` con dependencias Devolvió
-  disponibles                         `{"status":"ok","database":"connected","cache":"connected"}`.
-
-  Comprobación directa de Redis       `redis-cli ping` devolvió `PONG`.
-
-  Caída de MySQL                      Al ejecutar `stop db`, el endpoint devolvió HTTP `503` y
-                                      `database: "disconnected"`.
-
-  Estado de Redis durante la caída de El endpoint devolvió `cache: "connected"` y Redis siguió
-  MySQL                               respondiendo `PONG`.
-
-  Caché de catálogo de vídeos         Se observó una respuesta procedente de MySQL en la primera
-                                      petición y de Redis en una petición posterior; se había
-                                      configurado una expiración de 60 segundos.
-
-  Prueba con MySQL detenido y dato    Se observó que un resultado previamente cacheado podía seguir
-  cacheado                            sirviéndose mientras estaba disponible en Redis.
-
-  Frontend del health                 Se detectó y corrigió una referencia incorrecta a `data.redis`;
-                                      el backend utiliza `data.cache`. También se retiró una línea
-                                      accidental de shell (`cat > ...`) que se había introducido
-                                      dentro de `health.js`.
-  ---------------------------------------------------------------------------------------------------
-
-Estas son pruebas manuales, no una suite automatizada. Antes de la
-entrega, conviene repetirlas en una ejecución limpia y guardar las
-salidas finales.
-
-## Makefile y comandos útiles
-
-Si el `Makefile` de la raíz contiene los objetivos previstos, se pueden
-utilizar desde el directorio raíz:
-
-``` bash
-make up-dev
-make up-prod
-make down
+```text
+StreamForge/
+├── app/
+│   ├── src/
+│   ├── public/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── package-lock.json
+├── db/
+│   └── init.sql
+├── docker-compose.dev.yml
+├── docker-compose.prod.yml
+├── .env.dev.example
+├── .env.prod.example
+├── Makefile
+└── README.md
 ```
 
-El objetivo `down` puede detener uno o ambos entornos según cómo esté
-definido. Revisa siempre el archivo antes de ejecutarlo. Para evitar
-ambigüedades, los comandos Docker Compose explícitos de las secciones
-anteriores sirven como alternativa.
+## AI Usage Declaration
 
-Lista los objetivos disponibles:
+**Tool:** ChatGPT (GPT-6).
 
-``` bash
-make help
-```
+**Purpose:** Assistance with technical documentation, deployment explanations, and preparation of testing and verification procedures.
 
-Si `make help` no existe, inspecciona el archivo:
-
-``` bash
-cat Makefile
-```
-
-Para construir imágenes sin arrancar servicios:
-
-``` bash
-docker compose --env-file .env.dev -f docker-compose.dev.yml build
-docker compose --env-file .env.prod -f docker-compose.prod.yml build
-```
-
-Para ver la configuración final de Compose (incluidas las variables
-interpoladas; no publiques la salida si contiene secretos):
-
-``` bash
-docker compose --env-file .env.dev -f docker-compose.dev.yml config
-docker compose --env-file .env.prod -f docker-compose.prod.yml config
-```
-
-## Persistencia de datos
-
-MySQL utiliza volúmenes nombrados declarados en los archivos Compose.
-Para comprobarlos:
-
-``` bash
-docker compose --env-file .env.dev -f docker-compose.dev.yml config
-docker volume ls
-```
-
-La prueba de persistencia consiste en insertar un registro de prueba,
-recrear el contenedor de base de datos sin borrar el volumen y verificar
-que el registro sigue presente. Usa un registro identificable y
-elimínalo al finalizar si no debe permanecer en los datos de la
-práctica.
-
-**No uses `docker compose down -v` ni `docker volume rm` durante la
-comprobación**, porque esas operaciones pueden borrar los datos
-persistidos.
-
-## Solución de problemas
-
-### El servicio web no arranca
-
-``` bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=100 web
-docker compose --env-file .env.prod -f docker-compose.prod.yml ps
-```
-
-Comprueba que `SESSION_SECRET` está definido si la aplicación lo
-requiere y que los valores de entorno corresponden al Compose elegido.
-
-### Error de conexión con MySQL (`EAI_AGAIN db`)
-
-Este error indica que el contenedor web no pudo resolver el nombre DNS
-`db` en ese momento, por ejemplo, durante una parada o recreación del
-servicio.
-
-``` bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml ps
-docker compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=100 db
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
-```
-
-Espera a que MySQL esté saludable y vuelve a consultar `/health`.
-
-### Redis aparece como error en la interfaz
-
-Comprueba primero el servicio y el endpoint:
-
-``` bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml exec cache redis-cli ping
-curl -s http://localhost:8080/health
-```
-
-Si Redis devuelve `PONG` y el endpoint informa `cache: "connected"`,
-revisa que `app/public/js/health.js` lea `data.cache` y que los
-indicadores se calculen independientemente de `response.ok`.
-
-### Cambios de frontend que no aparecen
-
-El proyecto puede copiar los archivos frontend dentro de la imagen.
-Reconstruye el servicio web y fuerza su recreación:
-
-``` bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build --force-recreate web
-```
-
-Después recarga el navegador con `Ctrl + Shift + R`.
-
-## Seguridad
-
--   No subas `.env.dev` ni `.env.prod` con credenciales reales.
--   Usa secretos aleatorios para `SESSION_SECRET`.
--   No publiques los puertos de MySQL o Redis al host si no son
-    necesarios.
--   No uses contraseñas de ejemplo en despliegues reales.
--   Mantén separados los datos de desarrollo y producción.
--   Para producción real, utiliza HTTPS y configura adecuadamente las
-    cookies de sesión (`Secure`); el acceso local por HTTP puede
-    requerir una configuración distinta.
--   Revisa que `.gitignore` excluya los archivos `.env` y que solo se
-    versionen plantillas sin secretos, si se utilizan.
-
-## Pendiente de verificar
-
-Antes de entregar, verifica en el repositorio actual:
-
--   [ ] Que los nombres y objetivos reales del `Makefile` coinciden con
-    las instrucciones (`up-dev`, `up-prod`, `down`).
--   [ ] Que todos los servicios tienen un `healthcheck` en Compose o en
-    sus Dockerfiles y que `docker compose ps` refleja correctamente su
-    estado.
--   [ ] Que los nombres de los volúmenes de dev y prod son distintos.
--   [ ] Que `.env.dev` y `.env.prod` están excluidos de Git y que no
-    contienen valores de ejemplo inseguros.
--   [ ] Que la prueba de persistencia se ha ejecutado y documentado.
--   [ ] Que el endpoint y la interfaz muestran estados coherentes cuando
-    MySQL cae y Redis sigue operativo.
--   [ ] Que el README refleja el último código después de los cambios
-    recientes.
-
-------------------------------------------------------------------------
-
-**Nota:** este README documenta la configuración y las pruebas conocidas
-durante el desarrollo. Los nombres exactos de volúmenes, healthchecks y
-objetivos del `Makefile` deben contrastarse con los archivos actuales
-del repositorio antes de dar por finalizada la entrega.
+**Scope:** README drafting and documentation. The implementation, configuration, and reported test results must be verified against the actual project.
