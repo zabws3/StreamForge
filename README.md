@@ -279,6 +279,53 @@ make start-db-prod
 
 Refresh the health panel and confirm that the database connection recovers.
 
+## Adding Videos
+
+Videos must be prepared in **MPEG-DASH format** before they can be added to StreamForge.
+
+### 1. Segment the Video
+
+Use a DASH-compatible tool such as FFmpeg to process the original video into segments and generate the DASH manifest file, `manifest.mpd`.
+
+The resulting media directory should contain the manifest and the associated video and audio segments.
+
+### 2. Place the Media Files
+
+Create a directory named `media` **at the same level as the `StreamForge` project directory**, not inside it.
+
+The expected directory structure is:
+
+```text
+XA/
+├── StreamForge/
+│   ├── app/
+│   ├── db/
+│   ├── docker-compose.dev.yml
+│   ├── docker-compose.prod.yml
+│   ├── Makefile
+│   └── README.md
+└── media/
+    └── example-video/
+        ├── manifest.mpd
+        ├── video segments...
+        └── audio segments...
+```
+
+The directory name must be exactly `media`, because the Docker Compose configuration mounts this directory into the application container.
+
+In the current setup, the media directory is mounted as a read-only volume at `/var/zabflix/media`. The host directory must therefore be located at `../media` relative to the StreamForge project directory.
+
+### 3. Verify the DASH Manifest
+
+Before adding the video to the application, check that:
+
+- The `manifest.mpd` file exists.
+- All video and audio segments referenced by the manifest are present.
+- The manifest references the correct relative paths.
+- The application can access the files through the configured media mount.
+
+**Important:** Adding the media files alone may not automatically add the video to the catalogue. The corresponding video entry must also exist in the application's database.
+
 ## Makefile Commands
 
 | Command | Description |
